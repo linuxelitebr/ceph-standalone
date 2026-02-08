@@ -970,9 +970,27 @@ EOF
 echo "  ✓ 10-storageclass-vms.yaml"
 
 # =============================================================================
-# 11-apply-scc.sh (OpenShift SCC helper)
+# 11-snapshotclass.yaml
 # =============================================================================
-cat > "${OUTPUT_DIR}/11-apply-scc.sh" <<'EOF'
+cat > "${OUTPUT_DIR}/11-snapshotclass.yaml" <<EOF
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: ceph-rbd-snapclass
+driver: rbd.csi.ceph.com
+parameters:
+  clusterID: ${CEPH_FSID}
+  csi.storage.k8s.io/snapshotter-secret-name: csi-rbd-secret
+  csi.storage.k8s.io/snapshotter-secret-namespace: openshift-storage
+deletionPolicy: Delete
+EOF
+echo "  ✓ 11-snapshotclass.yaml"
+
+# =============================================================================
+# 12-apply-scc.sh (OpenShift SCC helper)
+# =============================================================================
+cat > "${OUTPUT_DIR}/12-apply-scc.sh" <<'EOF'
 #!/bin/bash
 # Apply required SCCs for ceph-csi on OpenShift
 echo "Applying privileged SCCs for ceph-csi service accounts..."
@@ -980,8 +998,8 @@ oc adm policy add-scc-to-user privileged system:serviceaccount:openshift-storage
 oc adm policy add-scc-to-user privileged system:serviceaccount:openshift-storage:rbd-csi-nodeplugin
 echo "✓ SCCs applied"
 EOF
-chmod +x "${OUTPUT_DIR}/11-apply-scc.sh"
-echo "  ✓ 11-apply-scc.sh"
+chmod +x "${OUTPUT_DIR}/12-apply-scc.sh"
+echo "  ✓ 12-apply-scc.sh"
 
 # =============================================================================
 # Summary
@@ -1001,7 +1019,7 @@ echo ""
 echo "=== To apply ==="
 echo ""
 echo "  # 1. Apply SCCs (required on OpenShift - do this FIRST):"
-echo "  ${OUTPUT_DIR}/11-apply-scc.sh"
+echo "  ${OUTPUT_DIR}/12-apply-scc.sh"
 echo ""
 echo "  # 2. Apply all manifests:"
 echo "  oc apply -f ${OUTPUT_DIR}/"
